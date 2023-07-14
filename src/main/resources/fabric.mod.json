@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "demobox",
+  "version": "${version}",
+  "name": "DemoBox",
+  "description": "A tool for creating interactive demo environments for mods",
+  "authors": [
+    "MattiDragon"
+  ],
+  "contact": {
+    "website": "https://modrinth.com/mods/demobox",
+    "repo": "https://github.com/MattiDragon/DemoBox"
+  },
+  "license": "MIT",
+  "icon": "assets/demobox/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "io.github.mattidragon.demobox.client.DemoBoxClient"
+    ],
+    "main": [
+      "io.github.mattidragon.demobox.DemoBox"
+    ]
+  },
+  "mixins": [
+    "demobox.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.14.21",
+    "fabric": "*",
+    "minecraft": "~1.20.1"
+  }
+}

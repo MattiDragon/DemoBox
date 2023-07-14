@@ -1,0 +1,5 @@
+{
+  "command.demobox.open.fail": "Failed to open demo box",
+  "demobox.demo.join": "%s joined the demo",
+  "gameType.demobox.demo_box": "Demo Box"
+}
