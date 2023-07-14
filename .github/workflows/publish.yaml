@@ -52,7 +52,7 @@ jobs:
           game-versions: ${{ steps.versions.outputs.minecraft_version }}
           changelog: ${{ steps.changelog.outputs.content }}
 
-          modrinth-token: ${{ secrets.GITHUB_TOKEN }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
           modrinth-id: b2SVO5sB
           modrinth-featured: false
 
