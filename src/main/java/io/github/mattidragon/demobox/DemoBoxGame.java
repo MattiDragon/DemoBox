@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.block.Blocks;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntryList;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -93,7 +94,7 @@ public class DemoBoxGame {
     private static RuntimeWorldConfig createWorldConfig(DynamicRegistryManager registryManager) {
         var worldConfig = new RuntimeWorldConfig();
         worldConfig.setFlat(true);
-        var generatorConfig = new FlatChunkGeneratorConfig(Optional.empty(), registryManager.get(RegistryKeys.BIOME).entryOf(BiomeKeys.PLAINS), List.of());
+        var generatorConfig = new FlatChunkGeneratorConfig(Optional.of(RegistryEntryList.of()), registryManager.get(RegistryKeys.BIOME).entryOf(BiomeKeys.PLAINS), List.of());
         generatorConfig.getLayers().add(new FlatChunkGeneratorLayer(1, Blocks.BARRIER));
         generatorConfig.updateLayerBlocks();
         worldConfig.setGenerator(new FlatChunkGenerator(generatorConfig));
