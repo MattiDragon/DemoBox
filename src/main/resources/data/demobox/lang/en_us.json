@@ -1,5 +1,10 @@
 {
   "command.demobox.open.fail": "Failed to open demo box",
   "demobox.demo.join": "%s joined the demo",
-  "gameType.demobox.demo_box": "Demo Box"
+  "gameType.demobox.demo_box": "Demo Box",
+
+  "demobox.info.1": "Welcome to the DemoBox!",
+  "demobox.info.2": "Here you can experiment with mods in by yourself.",
+  "demobox.info.3": "You might have noticed that you don't have any of your items.\nDon't worry. They'll be returned to you once you leave.",
+  "demobox.info.4": "You can leave using the /demobox leave command.\nYou can also use the /game command to leave and join active demos."
 }

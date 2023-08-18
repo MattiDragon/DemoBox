@@ -11,6 +11,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructurePlacementData;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec2f;
@@ -60,6 +61,7 @@ public class DemoBoxGame {
            instance.setup();
            activity.listen(GamePlayerEvents.OFFER, instance::onPlayerOffered);
            activity.listen(GamePlayerEvents.LEAVE, instance::onPlayerLeave);
+           activity.listen(GamePlayerEvents.JOIN, instance::onPlayerJoin);
        });
     }
 
@@ -83,6 +85,13 @@ public class DemoBoxGame {
         if (gameSpace.getPlayers().stream().allMatch(player2 -> player2 != player)) {
             gameSpace.close(GameCloseReason.FINISHED);
         }
+    }
+
+    private void onPlayerJoin(ServerPlayerEntity player) {
+        player.sendMessage(Text.translatable("demobox.info.1").formatted(Formatting.GREEN, Formatting.BOLD));
+        player.sendMessage(Text.translatable("demobox.info.2").formatted(Formatting.WHITE));
+        player.sendMessage(Text.translatable("demobox.info.3").formatted(Formatting.WHITE));
+        player.sendMessage(Text.translatable("demobox.info.4").formatted(Formatting.WHITE));
     }
 
     @NotNull
