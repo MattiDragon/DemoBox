@@ -1,5 +1,6 @@
 package io.github.mattidragon.demobox;
 
+import eu.pb4.predicate.api.PredicateRegistry;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
@@ -16,5 +17,6 @@ public class DemoBox implements ModInitializer {
     @Override
     public void onInitialize() {
         DemoBoxCommand.register();
+        PredicateRegistry.register(DemoBoxPredicate.ID, DemoBoxPredicate.CODEC);
     }
 }
