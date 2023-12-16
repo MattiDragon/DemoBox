@@ -74,10 +74,10 @@ public class DemoBoxCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int execute(ServerCommandSource source, Identifier structure, Vec3d pos, Collection<CommandFunction> functions) throws CommandSyntaxException {
+    private static int execute(ServerCommandSource source, Identifier structure, Vec3d pos, Collection<CommandFunction<ServerCommandSource>> functions) throws CommandSyntaxException {
         var player = source.getPlayerOrThrow();
 
-        DemoBoxGame.open(new DemoBoxGame.Settings(structure, pos, functions.stream().map(CommandFunction::getId).toList()))
+        DemoBoxGame.open(new DemoBoxGame.Settings(structure, pos, functions.stream().map(CommandFunction::id).toList()))
                 .thenAcceptAsync(gameSpace -> {
                     var space = GameSpaceManager.get().byPlayer(player);
                     if (space != null) space.getPlayers().kick(player);
