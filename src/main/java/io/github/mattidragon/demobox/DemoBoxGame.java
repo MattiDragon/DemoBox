@@ -92,6 +92,13 @@ public class DemoBoxGame {
         player.sendMessage(Text.translatable("demobox.info.2").formatted(Formatting.WHITE));
         player.sendMessage(Text.translatable("demobox.info.3").formatted(Formatting.WHITE));
         player.sendMessage(Text.translatable("demobox.info.4").formatted(Formatting.WHITE));
+
+        var server = player.getServer();
+        var manager = server.getCommandFunctionManager();
+        for (var id : settings.onJoinFunctions) {
+            manager.getFunction(id).ifPresentOrElse(function -> manager.execute(function, new ServerCommandSource(server, player.getPos(), player.getRotationClient(), world, settings.permissionLevel(), player.getNameForScoreboard(), player.getDisplayName(), server, player).withSilent()),
+                    () -> DemoBox.LOGGER.warn("Missing function: {}", id));
+        }
     }
 
     @NotNull
@@ -116,11 +123,13 @@ public class DemoBoxGame {
         return worldConfig;
     }
 
-    public record Settings(Identifier structureId, Vec3d playerPos, List<Identifier> functions) {
+    public record Settings(Identifier structureId, Vec3d playerPos, List<Identifier> functions, List<Identifier> onJoinFunctions, int permissionLevel) {
         public static final Codec<Settings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Identifier.CODEC.fieldOf("structureId").forGetter(Settings::structureId),
                 Vec3d.CODEC.fieldOf("playerPos").forGetter(Settings::playerPos),
-                Identifier.CODEC.listOf().fieldOf("functions").forGetter(Settings::functions)
+                Identifier.CODEC.listOf().fieldOf("functions").forGetter(Settings::functions),
+                Identifier.CODEC.listOf().fieldOf("onJoinFunctions").forGetter(Settings::onJoinFunctions),
+                Codec.INT.fieldOf("permissionLevel").forGetter(Settings::permissionLevel)
         ).apply(instance, Settings::new));
     }
 }

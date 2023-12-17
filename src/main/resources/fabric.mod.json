@@ -15,9 +15,6 @@
   "icon": "assets/demobox/icon.png",
   "environment": "*",
   "entrypoints": {
-    "client": [
-      "io.github.mattidragon.demobox.client.DemoBoxClient"
-    ],
     "main": [
       "io.github.mattidragon.demobox.DemoBox"
     ]

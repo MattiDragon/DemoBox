@@ -1,8 +1,10 @@
 package io.github.mattidragon.demobox;
 
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.IntegerSuggestion;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -48,12 +50,18 @@ public class DemoBoxCommand {
                             .requires(source -> Permissions.check(source, "demobox.open", 2))
                             .then(argument("template", IdentifierArgumentType.identifier())
                                     .suggests(STRUCTURE_SUGGESTION_PROVIDER)
-                                    .executes(context -> execute(context.getSource(), IdentifierArgumentType.getIdentifier(context, "template"), new Vec3d(0.5, 2, 0.5), List.of()))
+                                    .executes(context -> execute(context.getSource(), IdentifierArgumentType.getIdentifier(context, "template"), new Vec3d(0.5, 2, 0.5), List.of(), List.of(), context))
                                     .then(argument("pos", Vec3ArgumentType.vec3())
-                                            .executes(context -> execute(context.getSource(), IdentifierArgumentType.getIdentifier(context, "template"), Vec3ArgumentType.getVec3(context, "pos"), List.of()))
+                                            .executes(context -> execute(context.getSource(), IdentifierArgumentType.getIdentifier(context, "template"), Vec3ArgumentType.getVec3(context, "pos"), List.of(), List.of(), context))
                                             .then(argument("setupFunction", CommandFunctionArgumentType.commandFunction())
                                                     .suggests(FunctionCommand.SUGGESTION_PROVIDER)
-                                                    .executes(context -> execute(context.getSource(), IdentifierArgumentType.getIdentifier(context, "template"), Vec3ArgumentType.getVec3(context, "pos"), CommandFunctionArgumentType.getFunctions(context, "setupFunction"))))))));
+                                                    .executes(context -> execute(context.getSource(), IdentifierArgumentType.getIdentifier(context, "template"), Vec3ArgumentType.getVec3(context, "pos"), CommandFunctionArgumentType.getFunctions(context, "setupFunction"), List.of(), context))
+                                                    .then(argument("onJoinFunction", CommandFunctionArgumentType.commandFunction())
+                                                            .suggests(FunctionCommand.SUGGESTION_PROVIDER)
+                                                            .executes(context -> execute(context.getSource(), IdentifierArgumentType.getIdentifier(context, "template"), Vec3ArgumentType.getVec3(context, "pos"), CommandFunctionArgumentType.getFunctions(context, "setupFunction"), CommandFunctionArgumentType.getFunctions(context, "onJoinFunction"), context))
+                                                            .then(argument("permissionLevel", IntegerArgumentType.integer(0, 4))
+                                                                    .executes(context -> execute(context.getSource(), IdentifierArgumentType.getIdentifier(context, "template"), Vec3ArgumentType.getVec3(context, "pos"), CommandFunctionArgumentType.getFunctions(context, "setupFunction"), CommandFunctionArgumentType.getFunctions(context, "onJoinFunction"), IntegerArgumentType.getInteger(context, "permissionLevel"))))))))));
+
         });
     }
 
@@ -74,10 +82,15 @@ public class DemoBoxCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int execute(ServerCommandSource source, Identifier structure, Vec3d pos, Collection<CommandFunction<ServerCommandSource>> functions) throws CommandSyntaxException {
+    private static int execute(ServerCommandSource source, Identifier structure, Vec3d pos, Collection<CommandFunction<ServerCommandSource>> functions, Collection<CommandFunction<ServerCommandSource>> onJoinFunctions, CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        var player = context.getSource().getPlayerOrThrow();
+        var server = player.getServer();
+        return execute(source, structure, pos, functions, onJoinFunctions, server.getPermissionLevel(player.getGameProfile()));
+    }
+    private static int execute(ServerCommandSource source, Identifier structure, Vec3d pos, Collection<CommandFunction<ServerCommandSource>> functions, Collection<CommandFunction<ServerCommandSource>> onJoinFunctions, int permissionLevel) throws CommandSyntaxException {
         var player = source.getPlayerOrThrow();
 
-        DemoBoxGame.open(new DemoBoxGame.Settings(structure, pos, functions.stream().map(CommandFunction::id).toList()))
+        DemoBoxGame.open(new DemoBoxGame.Settings(structure, pos, functions.stream().map(CommandFunction::id).toList(), onJoinFunctions.stream().map(CommandFunction::id).toList(), permissionLevel))
                 .thenAcceptAsync(gameSpace -> {
                     var space = GameSpaceManager.get().byPlayer(player);
                     if (space != null) space.getPlayers().kick(player);
