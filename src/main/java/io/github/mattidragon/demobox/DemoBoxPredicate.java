@@ -5,7 +5,7 @@ import eu.pb4.predicate.api.AbstractPredicate;
 import eu.pb4.predicate.api.PredicateContext;
 import eu.pb4.predicate.api.PredicateResult;
 import net.minecraft.util.Identifier;
-import xyz.nucleoid.plasmid.game.manager.GameSpaceManager;
+import xyz.nucleoid.plasmid.api.game.GameSpaceManager;
 
 public class DemoBoxPredicate extends AbstractPredicate {
     public static final Identifier ID = DemoBox.id("in_demo");
@@ -22,7 +22,7 @@ public class DemoBoxPredicate extends AbstractPredicate {
         if (world == null) return PredicateResult.ofFailure();
         var gameSpace = GameSpaceManager.get().byWorld(world);
         if (gameSpace == null) return PredicateResult.ofFailure();
-        if (gameSpace.getMetadata().sourceConfig().type() != DemoBoxGame.TYPE) return PredicateResult.ofFailure();
+        if (gameSpace.getMetadata().sourceConfig().value().type() != DemoBoxGame.TYPE) return PredicateResult.ofFailure();
         return PredicateResult.ofSuccess();
     }
 }

@@ -18,16 +18,18 @@ import net.minecraft.structure.StructureTemplateManager;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
-import xyz.nucleoid.plasmid.command.GameCommand;
-import xyz.nucleoid.plasmid.game.manager.GameSpaceManager;
-import xyz.nucleoid.plasmid.game.player.GamePlayerJoiner;
-import xyz.nucleoid.plasmid.util.Scheduler;
+import xyz.nucleoid.plasmid.api.game.GameSpaceManager;
+import xyz.nucleoid.plasmid.api.game.player.GamePlayerJoiner;
+import xyz.nucleoid.plasmid.api.game.player.JoinIntent;
+import xyz.nucleoid.plasmid.api.util.Scheduler;
+import xyz.nucleoid.plasmid.impl.game.manager.GameSpaceManagerImpl;
 
 import java.util.Collection;
 import java.util.List;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
+import static xyz.nucleoid.plasmid.impl.command.GameCommand.NOT_IN_GAME;
 
 public class DemoBoxCommand {
     private static final SuggestionProvider<ServerCommandSource> STRUCTURE_SUGGESTION_PROVIDER = (context, builder) -> {
@@ -62,9 +64,9 @@ public class DemoBoxCommand {
         var source = context.getSource();
         var player = source.getPlayerOrThrow();
 
-        var gameSpace = GameSpaceManager.get().byPlayer(player);
+        var gameSpace = GameSpaceManagerImpl.get().byPlayer(player);
         if (gameSpace == null) {
-            throw GameCommand.NOT_IN_GAME.create();
+            throw NOT_IN_GAME.create();
         }
 
         Scheduler.INSTANCE.submit(server -> {
@@ -82,8 +84,8 @@ public class DemoBoxCommand {
                     var space = GameSpaceManager.get().byPlayer(player);
                     if (space != null) space.getPlayers().kick(player);
 
-                    var results = GamePlayerJoiner.tryJoin(player, gameSpace);
-                    if (results.globalError != null || !results.playerErrors.isEmpty()) {
+                    var results = GamePlayerJoiner.tryJoin(player, gameSpace, JoinIntent.PLAY);
+                    if (results.error() != null) {
                         source.sendError(Text.translatable("command.demobox.open.fail"));
                     }
                 }, player.getServer());

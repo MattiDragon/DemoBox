@@ -1,10 +1,11 @@
 package io.github.mattidragon.demobox;
 
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.block.Blocks;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.entry.RegistryEntryList;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -22,15 +23,16 @@ import net.minecraft.world.gen.chunk.FlatChunkGenerator;
 import net.minecraft.world.gen.chunk.FlatChunkGeneratorConfig;
 import net.minecraft.world.gen.chunk.FlatChunkGeneratorLayer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
-import xyz.nucleoid.plasmid.game.*;
-import xyz.nucleoid.plasmid.game.config.CustomValuesConfig;
-import xyz.nucleoid.plasmid.game.config.GameConfig;
-import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
-import xyz.nucleoid.plasmid.game.manager.GameSpaceManager;
-import xyz.nucleoid.plasmid.game.manager.ManagedGameSpace;
-import xyz.nucleoid.plasmid.game.player.PlayerOffer;
-import xyz.nucleoid.plasmid.game.player.PlayerOfferResult;
+import xyz.nucleoid.plasmid.api.game.*;
+import xyz.nucleoid.plasmid.api.game.config.CustomValuesConfig;
+import xyz.nucleoid.plasmid.api.game.config.GameConfig;
+import xyz.nucleoid.plasmid.api.game.event.GamePlayerEvents;
+import xyz.nucleoid.plasmid.api.game.player.JoinAcceptor;
+import xyz.nucleoid.plasmid.api.game.player.JoinAcceptorResult;
+import xyz.nucleoid.plasmid.api.game.player.JoinOffer;
+import xyz.nucleoid.plasmid.api.game.player.JoinOfferResult;
 
 import java.util.Arrays;
 import java.util.List;
@@ -50,9 +52,9 @@ public class DemoBoxGame {
         this.settings = settings;
     }
 
-    public static CompletableFuture<ManagedGameSpace> open(Settings settings) {
-        var config = new GameConfig<>(null, TYPE, null, null, null, null, CustomValuesConfig.empty(), settings);
-        return GameSpaceManager.get().open(config);
+    public static CompletableFuture<GameSpace> open(Settings settings) {
+        var config = new GameConfig<>(TYPE, null, null, null, null, CustomValuesConfig.empty(), settings);
+        return GameSpaceManager.get().open(RegistryEntry.of(config));
     }
 
     private static GameOpenProcedure open(GameOpenContext<Settings> context) {
@@ -60,8 +62,11 @@ public class DemoBoxGame {
            var instance = new DemoBoxGame(world, activity.getGameSpace(), context.config());
            instance.setup();
            activity.listen(GamePlayerEvents.OFFER, instance::onPlayerOffered);
+           activity.listen(GamePlayerEvents.ACCEPT, instance::onPlayerAccepted);
            activity.listen(GamePlayerEvents.LEAVE, instance::onPlayerLeave);
            activity.listen(GamePlayerEvents.JOIN, instance::onPlayerJoin);
+           activity.listen(GamePlayerEvents.JOIN_MESSAGE, instance::onJoinMessage);
+           activity.listen(GamePlayerEvents.LEAVE_MESSAGE, instance::onLeaveMessage);
        });
     }
 
@@ -94,9 +99,20 @@ public class DemoBoxGame {
         player.sendMessage(Text.translatable("demobox.info.4").formatted(Formatting.WHITE));
     }
 
-    @NotNull
-    private PlayerOfferResult onPlayerOffered(PlayerOffer offer) {
-        return offer.accept(world, settings.playerPos);
+    private Text onJoinMessage(ServerPlayerEntity player, @Nullable Text currentText, Text defaultText) {
+        return Text.translatable("demobox.demo.join", player.getDisplayName()).formatted(Formatting.YELLOW);
+    }
+
+    private Text onLeaveMessage(ServerPlayerEntity player, @Nullable Text currentText, Text defaultText) {
+        return Text.translatable("demobox.demo.leave", player.getDisplayName()).formatted(Formatting.YELLOW);
+    }
+
+    private JoinOfferResult onPlayerOffered(JoinOffer offer) {
+        return offer.accept();
+    }
+
+    private JoinAcceptorResult onPlayerAccepted(JoinAcceptor joinAcceptor) {
+        return joinAcceptor.teleport(world, settings.playerPos);
     }
 
     @NotNull
@@ -117,7 +133,7 @@ public class DemoBoxGame {
     }
 
     public record Settings(Identifier structureId, Vec3d playerPos, List<Identifier> functions) {
-        public static final Codec<Settings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+        public static final MapCodec<Settings> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
                 Identifier.CODEC.fieldOf("structureId").forGetter(Settings::structureId),
                 Vec3d.CODEC.fieldOf("playerPos").forGetter(Settings::playerPos),
                 Identifier.CODEC.listOf().fieldOf("functions").forGetter(Settings::functions)

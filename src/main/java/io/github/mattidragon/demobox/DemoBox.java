@@ -11,7 +11,7 @@ public class DemoBox implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("DemoBox");
 
     public static Identifier id(String path) {
-        return new Identifier(MOD_ID, path);
+        return Identifier.of(MOD_ID, path);
     }
 
     @Override
