@@ -24,4 +24,3 @@ jobs:
       jitpack-safe-version: true
     secrets:
       modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-      curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
