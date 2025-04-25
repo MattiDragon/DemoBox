@@ -12,6 +12,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructurePlacementData;
 import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -33,6 +34,7 @@ import xyz.nucleoid.plasmid.api.game.player.JoinAcceptor;
 import xyz.nucleoid.plasmid.api.game.player.JoinAcceptorResult;
 import xyz.nucleoid.plasmid.api.game.player.JoinOffer;
 import xyz.nucleoid.plasmid.api.game.player.JoinOfferResult;
+import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 import java.util.Arrays;
 import java.util.List;
@@ -67,6 +69,11 @@ public class DemoBoxGame {
            activity.listen(GamePlayerEvents.JOIN, instance::onPlayerJoin);
            activity.listen(GamePlayerEvents.JOIN_MESSAGE, instance::onJoinMessage);
            activity.listen(GamePlayerEvents.LEAVE_MESSAGE, instance::onLeaveMessage);
+           activity.listen(PlayerDeathEvent.EVENT, (player, source) -> {
+               instance.gameSpace.getPlayers().kick(player);
+               player.sendMessage(Text.translatable("demobox.demo.death").formatted(Formatting.RED));
+               return ActionResult.FAIL;
+           });
        });
     }
 
