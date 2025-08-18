@@ -26,8 +26,8 @@
     "demobox.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.16.10",
+    "fabricloader": ">=0.17.2",
     "fabric-api": "*",
-    "minecraft": "1.21.1"
+    "minecraft": "1.21.8"
   }
 }

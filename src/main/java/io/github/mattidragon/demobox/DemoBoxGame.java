@@ -4,7 +4,6 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.block.Blocks;
 import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.entry.RegistryEntryList;
 import net.minecraft.server.command.ServerCommandSource;
@@ -12,7 +11,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructurePlacementData;
 import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -34,6 +32,7 @@ import xyz.nucleoid.plasmid.api.game.player.JoinAcceptor;
 import xyz.nucleoid.plasmid.api.game.player.JoinAcceptorResult;
 import xyz.nucleoid.plasmid.api.game.player.JoinOffer;
 import xyz.nucleoid.plasmid.api.game.player.JoinOfferResult;
+import xyz.nucleoid.stimuli.event.EventResult;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 import java.util.Arrays;
@@ -72,7 +71,7 @@ public class DemoBoxGame {
            activity.listen(PlayerDeathEvent.EVENT, (player, source) -> {
                instance.gameSpace.getPlayers().kick(player);
                player.sendMessage(Text.translatable("demobox.demo.death").formatted(Formatting.RED));
-               return ActionResult.FAIL;
+               return EventResult.DENY;
            });
        });
     }
@@ -88,8 +87,13 @@ public class DemoBoxGame {
         var server = world.getServer();
         var manager = server.getCommandFunctionManager();
         for (var id : settings.functions) {
-            manager.getFunction(id).ifPresentOrElse(function -> manager.execute(function, new ServerCommandSource(server, Vec3d.ZERO, Vec2f.ZERO, world, 2, "DemoBox Setup", Text.literal("DemoBox Setup"), server, null).withSilent()),
-                    () -> DemoBox.LOGGER.warn("Missing function: {}", id));
+            manager.getFunction(id).ifPresentOrElse(
+                    function -> manager.execute(
+                            function,
+                            new ServerCommandSource(server, Vec3d.ZERO, Vec2f.ZERO, world, 2, "DemoBox Setup", Text.literal("DemoBox Setup"), server, null).withSilent()
+                    ),
+                    () -> DemoBox.LOGGER.warn("Missing function: {}", id)
+            );
         }
     }
 
@@ -126,7 +130,7 @@ public class DemoBoxGame {
     private static RuntimeWorldConfig createWorldConfig(DynamicRegistryManager registryManager) {
         var worldConfig = new RuntimeWorldConfig();
         worldConfig.setFlat(true);
-        var generatorConfig = new FlatChunkGeneratorConfig(Optional.of(RegistryEntryList.of()), registryManager.get(RegistryKeys.BIOME).entryOf(BiomeKeys.PLAINS), List.of());
+        var generatorConfig = new FlatChunkGeneratorConfig(Optional.of(RegistryEntryList.of()), registryManager.getEntryOrThrow(BiomeKeys.PLAINS), List.of());
         generatorConfig.getLayers().add(new FlatChunkGeneratorLayer(1, Blocks.BARRIER));
         generatorConfig.updateLayerBlocks();
         worldConfig.setGenerator(new FlatChunkGenerator(generatorConfig));

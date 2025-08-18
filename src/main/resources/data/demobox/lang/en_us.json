@@ -2,7 +2,7 @@
   "command.demobox.open.fail": "Failed to open demo box",
   "demobox.demo.join": "%s joined the demo",
   "demobox.demo.leave": "%s left the game",
-  "demobox.demo.death": "You have died in the demo and thus removed from it. You can open another one if your want to.",
+  "demobox.demo.death": "You have died in the demo and have thus been removed from it. You can open another one if your want to continue.",
   "gameType.demobox.demo_box": "Demo Box",
 
   "demobox.info.1": "Welcome to the DemoBox!",
