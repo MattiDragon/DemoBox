@@ -73,12 +73,16 @@ public class DemoBoxCommand {
     private static RequiredArgumentBuilder<ServerCommandSource, Identifier> buildArgTree(CommandHandler handler) {
         return argument("template", IdentifierArgumentType.identifier())
                 .suggests(STRUCTURE_SUGGESTION_PROVIDER)
-                .executes(context -> handler.execute(context, IdentifierArgumentType.getIdentifier(context, "template"), new Vec3d(0.5, 2, 0.5), List.of()))
+                .executes(context -> handler.execute(context, IdentifierArgumentType.getIdentifier(context, "template"), new Vec3d(0.5, 2, 0.5), List.of(), List.of()))
                 .then(argument("pos", Vec3ArgumentType.vec3())
-                        .executes(context -> handler.execute(context, IdentifierArgumentType.getIdentifier(context, "template"), Vec3ArgumentType.getVec3(context, "pos"), List.of()))
+                        .executes(context -> handler.execute(context, IdentifierArgumentType.getIdentifier(context, "template"), Vec3ArgumentType.getVec3(context, "pos"), List.of(), List.of()))
                         .then(argument("setupFunction", CommandFunctionArgumentType.commandFunction())
                                 .suggests(FunctionCommand.SUGGESTION_PROVIDER)
-                                .executes(context -> handler.execute(context, IdentifierArgumentType.getIdentifier(context, "template"), Vec3ArgumentType.getVec3(context, "pos"), CommandFunctionArgumentType.getFunctions(context, "setupFunction")))));
+                                .executes(context -> handler.execute(context, IdentifierArgumentType.getIdentifier(context, "template"), Vec3ArgumentType.getVec3(context, "pos"), CommandFunctionArgumentType.getFunctions(context, "setupFunction"), List.of()))
+                            .then(
+                                argument("playerFunction", CommandFunctionArgumentType.commandFunction())
+                                    .suggests(FunctionCommand.SUGGESTION_PROVIDER)
+                                    .executes(context -> handler.execute(context, IdentifierArgumentType.getIdentifier(context, "template"), Vec3ArgumentType.getVec3(context, "pos"), CommandFunctionArgumentType.getFunctions(context, "setupFunction"), CommandFunctionArgumentType.getFunctions(context, "playerFunction"))))));
     }
 
     // Joinked from GameCommand because brigadier can't deal with childless redirects
@@ -98,7 +102,7 @@ public class DemoBoxCommand {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int executeSign(CommandContext<ServerCommandSource> context, Identifier structure, Vec3d pos, Collection<CommandFunction<ServerCommandSource>> functions) throws CommandSyntaxException {
+    private static int executeSign(CommandContext<ServerCommandSource> context, Identifier structure, Vec3d pos, Collection<CommandFunction<ServerCommandSource>> functions,  Collection<CommandFunction<ServerCommandSource>> playerFunctions) throws CommandSyntaxException {
         var signPos = BlockPosArgumentType.getLoadedBlockPos(context, "signPos");
         var source = context.getSource();
         var block = source.getWorld().getBlockState(signPos).getBlock();
@@ -163,11 +167,11 @@ public class DemoBoxCommand {
         return context.getInput().substring(mainNode.getRange().getStart());
     }
 
-    private static int executeOpen(CommandContext<ServerCommandSource> context, Identifier structure, Vec3d pos, Collection<CommandFunction<ServerCommandSource>> functions) throws CommandSyntaxException {
+    private static int executeOpen(CommandContext<ServerCommandSource> context, Identifier structure, Vec3d pos, Collection<CommandFunction<ServerCommandSource>> functions, Collection<CommandFunction<ServerCommandSource>> playerFunctions) throws CommandSyntaxException {
         var source = context.getSource();
         var player = source.getPlayerOrThrow();
 
-        DemoBoxGame.open(new DemoBoxGame.Settings(structure, pos, functions.stream().map(CommandFunction::id).toList()))
+        DemoBoxGame.open(new DemoBoxGame.Settings(structure, pos, functions.stream().map(CommandFunction::id).toList(), playerFunctions.stream().map(CommandFunction::id).toList()))
                 .thenAcceptAsync(gameSpace -> {
                     var space = GameSpaceManager.get().byPlayer(player);
                     if (space != null) space.getPlayers().kick(player);
@@ -182,6 +186,6 @@ public class DemoBoxCommand {
 
     @FunctionalInterface
     private interface CommandHandler {
-        int execute(CommandContext<ServerCommandSource> context, Identifier structure, Vec3d pos, Collection<CommandFunction<ServerCommandSource>> functions) throws CommandSyntaxException;
+        int execute(CommandContext<ServerCommandSource> context, Identifier structure, Vec3d pos, Collection<CommandFunction<ServerCommandSource>> functions, Collection<CommandFunction<ServerCommandSource>> playerFunctions) throws CommandSyntaxException;
     }
 }
