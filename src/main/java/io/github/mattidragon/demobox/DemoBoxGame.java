@@ -3,6 +3,7 @@ package io.github.mattidragon.demobox;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.Entity;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.entry.RegistryEntryList;
@@ -84,17 +85,7 @@ public class DemoBoxGame {
                     var pos = new BlockPos(size.getX() / -2, 1, size.getZ() / -2);
                     template.place(world, pos, pos, new StructurePlacementData(), world.random, 0);
                 });
-        var server = world.getServer();
-        var manager = server.getCommandFunctionManager();
-        for (var id : settings.functions) {
-            manager.getFunction(id).ifPresentOrElse(
-                    function -> manager.execute(
-                            function,
-                            new ServerCommandSource(server, Vec3d.ZERO, Vec2f.ZERO, world, 2, "DemoBox Setup", Text.literal("DemoBox Setup"), server, null).withSilent()
-                    ),
-                    () -> DemoBox.LOGGER.warn("Missing function: {}", id)
-            );
-        }
+        executeFunctions(settings.functions, null);
     }
 
     private void onPlayerLeave(ServerPlayerEntity player) {
@@ -108,6 +99,7 @@ public class DemoBoxGame {
         player.sendMessage(Text.translatable("demobox.info.2").formatted(Formatting.WHITE));
         player.sendMessage(Text.translatable("demobox.info.3").formatted(Formatting.WHITE));
         player.sendMessage(Text.translatable("demobox.info.4").formatted(Formatting.WHITE));
+        executeFunctions(settings.playerFunctions, player);
     }
 
     private Text onJoinMessage(ServerPlayerEntity player, @Nullable Text currentText, Text defaultText) {
@@ -124,6 +116,20 @@ public class DemoBoxGame {
 
     private JoinAcceptorResult onPlayerAccepted(JoinAcceptor joinAcceptor) {
         return joinAcceptor.teleport(world, settings.playerPos);
+    }
+
+    private void executeFunctions(List<Identifier> functions, Entity entity) {
+        var server = world.getServer();
+        var manager = server.getCommandFunctionManager();
+        for (var id : functions) {
+            manager.getFunction(id).ifPresentOrElse(
+                function -> manager.execute(
+                    function,
+                    new ServerCommandSource(server, Vec3d.ZERO, Vec2f.ZERO, world, 2, "DemoBox Setup", Text.literal("DemoBox Setup"), server, entity).withSilent()
+                ),
+                () -> DemoBox.LOGGER.warn("Missing function: {}", id)
+            );
+        }
     }
 
     @NotNull
@@ -143,11 +149,12 @@ public class DemoBoxGame {
         return worldConfig;
     }
 
-    public record Settings(Identifier structureId, Vec3d playerPos, List<Identifier> functions) {
+    public record Settings(Identifier structureId, Vec3d playerPos, List<Identifier> functions, List<Identifier> playerFunctions) {
         public static final MapCodec<Settings> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
                 Identifier.CODEC.fieldOf("structureId").forGetter(Settings::structureId),
                 Vec3d.CODEC.fieldOf("playerPos").forGetter(Settings::playerPos),
-                Identifier.CODEC.listOf().fieldOf("functions").forGetter(Settings::functions)
+                Identifier.CODEC.listOf().fieldOf("functions").forGetter(Settings::functions),
+                Identifier.CODEC.listOf().fieldOf("playerFunctions").forGetter(Settings::playerFunctions)
         ).apply(instance, Settings::new));
     }
 }
