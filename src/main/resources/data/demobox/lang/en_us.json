@@ -14,5 +14,15 @@
 	"demobox.info.1": "Welcome to the DemoBox!",
 	"demobox.info.2": "  Here you can experiment with mods in by yourself.",
 	"demobox.info.3": "  You might have noticed that you don't have any of your items.\n  Don't worry. They'll be returned to you once you leave.",
-	"demobox.info.4": "  You can leave using the /demobox leave command.\n  You can also use the /game command to leave and join active demos."
+	"demobox.info.4": "  You can leave using the /demobox leave command.\n  You can also use the /game command to leave and join active demos.",
+	"demobox.config.invalid": "Invalid config: %s",
+	"demobox.dialog.create.title": "Create demo",
+	"demobox.dialog.edit.title": "Edit demo",
+	"demobox.dialog.field.id": "Demo id",
+	"demobox.dialog.field.structure": "Structure id",
+	"demobox.dialog.field.pos": "Spawn position",
+	"demobox.dialog.field.setup_commands": "Setup commands",
+	"demobox.dialog.field.join_commands": "Join commands",
+	"demobox.demo.not_found": "Could not find demo %s",
+	"demobox.demo.deleted": "Deleted demo %s"
 }
