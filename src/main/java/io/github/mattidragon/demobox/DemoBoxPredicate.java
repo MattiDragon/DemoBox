@@ -4,11 +4,11 @@ import com.mojang.serialization.MapCodec;
 import eu.pb4.predicate.api.AbstractPredicate;
 import eu.pb4.predicate.api.PredicateContext;
 import eu.pb4.predicate.api.PredicateResult;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import xyz.nucleoid.plasmid.api.game.GameSpaceManager;
 
 public class DemoBoxPredicate extends AbstractPredicate {
-    public static final Identifier ID = DemoBox.id("in_demo");
+    public static final ResourceLocation ID = DemoBox.id("in_demo");
     public static final DemoBoxPredicate INSTANCE = new DemoBoxPredicate();
     public static final MapCodec<DemoBoxPredicate> CODEC = MapCodec.unit(INSTANCE);
 

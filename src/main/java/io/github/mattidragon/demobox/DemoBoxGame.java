@@ -2,26 +2,6 @@ package io.github.mattidragon.demobox;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.Entity;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.entry.RegistryEntryList;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.structure.StructurePlacementData;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.biome.BiomeKeys;
-import net.minecraft.world.gen.chunk.FlatChunkGenerator;
-import net.minecraft.world.gen.chunk.FlatChunkGeneratorConfig;
-import net.minecraft.world.gen.chunk.FlatChunkGeneratorLayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
@@ -40,15 +20,35 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.FlatLevelSource;
+import net.minecraft.world.level.levelgen.flat.FlatLayerInfo;
+import net.minecraft.world.level.levelgen.flat.FlatLevelGeneratorSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 
 public class DemoBoxGame {
     public static final GameType<Settings> TYPE = GameType.register(DemoBox.id("demo_box"), Settings.CODEC, DemoBoxGame::open);
 
-    private final ServerWorld world;
+    private final ServerLevel world;
     private final GameSpace gameSpace;
     private final Settings settings;
 
-    public DemoBoxGame(ServerWorld world, GameSpace gameSpace, Settings settings) {
+    public DemoBoxGame(ServerLevel world, GameSpace gameSpace, Settings settings) {
         this.world = world;
         this.gameSpace = gameSpace;
         this.settings = settings;
@@ -56,11 +56,11 @@ public class DemoBoxGame {
 
     public static CompletableFuture<GameSpace> open(Settings settings) {
         var config = new GameConfig<>(TYPE, null, null, null, null, CustomValuesConfig.empty(), settings);
-        return GameSpaceManager.get().open(RegistryEntry.of(config));
+        return GameSpaceManager.get().open(Holder.direct(config));
     }
 
     private static GameOpenProcedure open(GameOpenContext<Settings> context) {
-       return context.openWithWorld(createWorldConfig(context.server().getRegistryManager()), (activity, world) -> {
+       return context.openWithWorld(createWorldConfig(context.server().registryAccess()), (activity, world) -> {
            var instance = new DemoBoxGame(world, activity.getGameSpace(), context.config());
            instance.setup();
            activity.listen(GamePlayerEvents.OFFER, instance::onPlayerOffered);
@@ -71,43 +71,43 @@ public class DemoBoxGame {
            activity.listen(GamePlayerEvents.LEAVE_MESSAGE, instance::onLeaveMessage);
            activity.listen(PlayerDeathEvent.EVENT, (player, source) -> {
                instance.gameSpace.getPlayers().kick(player);
-               player.sendMessage(Text.translatable("demobox.demo.death").formatted(Formatting.RED));
+               player.sendSystemMessage(Component.translatable("demobox.demo.death").withStyle(ChatFormatting.RED));
                return EventResult.DENY;
            });
        });
     }
 
     private void setup() {
-        world.getStructureTemplateManager()
-                .getTemplate(settings.structureId)
+        world.getStructureManager()
+                .get(settings.structureId)
                 .ifPresent(template -> {
                     var size = template.getSize();
                     var pos = new BlockPos(size.getX() / -2, 1, size.getZ() / -2);
-                    template.place(world, pos, pos, new StructurePlacementData(), world.random, 0);
+                    template.placeInWorld(world, pos, pos, new StructurePlaceSettings(), world.random, 0);
                 });
         executeFunctions(settings.functions, null);
     }
 
-    private void onPlayerLeave(ServerPlayerEntity player) {
+    private void onPlayerLeave(ServerPlayer player) {
         if (gameSpace.getPlayers().stream().allMatch(player2 -> player2 != player)) {
             gameSpace.close(GameCloseReason.FINISHED);
         }
     }
 
-    private void onPlayerJoin(ServerPlayerEntity player) {
-        player.sendMessage(Text.translatable("demobox.info.1").formatted(Formatting.GREEN, Formatting.BOLD));
-        player.sendMessage(Text.translatable("demobox.info.2").formatted(Formatting.WHITE));
-        player.sendMessage(Text.translatable("demobox.info.3").formatted(Formatting.WHITE));
-        player.sendMessage(Text.translatable("demobox.info.4").formatted(Formatting.WHITE));
+    private void onPlayerJoin(ServerPlayer player) {
+        player.sendSystemMessage(Component.translatable("demobox.info.1").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
+        player.sendSystemMessage(Component.translatable("demobox.info.2").withStyle(ChatFormatting.WHITE));
+        player.sendSystemMessage(Component.translatable("demobox.info.3").withStyle(ChatFormatting.WHITE));
+        player.sendSystemMessage(Component.translatable("demobox.info.4").withStyle(ChatFormatting.WHITE));
         executeFunctions(settings.playerFunctions, player);
     }
 
-    private Text onJoinMessage(ServerPlayerEntity player, @Nullable Text currentText, Text defaultText) {
-        return Text.translatable("demobox.demo.join", player.getDisplayName()).formatted(Formatting.YELLOW);
+    private Component onJoinMessage(ServerPlayer player, @Nullable Component currentText, Component defaultText) {
+        return Component.translatable("demobox.demo.join", player.getDisplayName()).withStyle(ChatFormatting.YELLOW);
     }
 
-    private Text onLeaveMessage(ServerPlayerEntity player, @Nullable Text currentText, Text defaultText) {
-        return Text.translatable("demobox.demo.leave", player.getDisplayName()).formatted(Formatting.YELLOW);
+    private Component onLeaveMessage(ServerPlayer player, @Nullable Component currentText, Component defaultText) {
+        return Component.translatable("demobox.demo.leave", player.getDisplayName()).withStyle(ChatFormatting.YELLOW);
     }
 
     private JoinOfferResult onPlayerOffered(JoinOffer offer) {
@@ -118,14 +118,14 @@ public class DemoBoxGame {
         return joinAcceptor.teleport(world, settings.playerPos);
     }
 
-    private void executeFunctions(List<Identifier> functions, Entity entity) {
+    private void executeFunctions(List<ResourceLocation> functions, Entity entity) {
         var server = world.getServer();
-        var manager = server.getCommandFunctionManager();
+        var manager = server.getFunctions();
         for (var id : functions) {
-            manager.getFunction(id).ifPresentOrElse(
+            manager.get(id).ifPresentOrElse(
                 function -> manager.execute(
                     function,
-                    new ServerCommandSource(server, Vec3d.ZERO, Vec2f.ZERO, world, 2, "DemoBox Setup", Text.literal("DemoBox Setup"), server, entity).withSilent()
+                    new CommandSourceStack(server, Vec3.ZERO, Vec2.ZERO, world, 2, "DemoBox Setup", Component.literal("DemoBox Setup"), server, entity).withSuppressedOutput()
                 ),
                 () -> DemoBox.LOGGER.warn("Missing function: {}", id)
             );
@@ -133,15 +133,15 @@ public class DemoBoxGame {
     }
 
     @NotNull
-    private static RuntimeWorldConfig createWorldConfig(DynamicRegistryManager registryManager) {
+    private static RuntimeWorldConfig createWorldConfig(RegistryAccess registryManager) {
         var worldConfig = new RuntimeWorldConfig();
         worldConfig.setFlat(true);
-        var generatorConfig = new FlatChunkGeneratorConfig(Optional.of(RegistryEntryList.of()), registryManager.getEntryOrThrow(BiomeKeys.PLAINS), List.of());
-        generatorConfig.getLayers().add(new FlatChunkGeneratorLayer(1, Blocks.BARRIER));
-        generatorConfig.updateLayerBlocks();
-        worldConfig.setGenerator(new FlatChunkGenerator(generatorConfig));
+        var generatorConfig = new FlatLevelGeneratorSettings(Optional.of(HolderSet.direct()), registryManager.getOrThrow(Biomes.PLAINS), List.of());
+        generatorConfig.getLayersInfo().add(new FlatLayerInfo(1, Blocks.BARRIER));
+        generatorConfig.updateLayers();
+        worldConfig.setGenerator(new FlatLevelSource(generatorConfig));
 
-        var disabledRules = Arrays.asList(GameRules.DO_DAYLIGHT_CYCLE, GameRules.DO_WEATHER_CYCLE, GameRules.DO_MOB_SPAWNING, GameRules.DO_PATROL_SPAWNING, GameRules.DO_INSOMNIA, GameRules.DO_TRADER_SPAWNING);
+        var disabledRules = Arrays.asList(GameRules.RULE_DAYLIGHT, GameRules.RULE_WEATHER_CYCLE, GameRules.RULE_DOMOBSPAWNING, GameRules.RULE_DO_PATROL_SPAWNING, GameRules.RULE_DOINSOMNIA, GameRules.RULE_DO_TRADER_SPAWNING);
         for (var booleanRuleKey : disabledRules) {
             worldConfig.setGameRule(booleanRuleKey, false);
         }
@@ -149,12 +149,12 @@ public class DemoBoxGame {
         return worldConfig;
     }
 
-    public record Settings(Identifier structureId, Vec3d playerPos, List<Identifier> functions, List<Identifier> playerFunctions) {
+    public record Settings(ResourceLocation structureId, Vec3 playerPos, List<ResourceLocation> functions, List<ResourceLocation> playerFunctions) {
         public static final MapCodec<Settings> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-                Identifier.CODEC.fieldOf("structureId").forGetter(Settings::structureId),
-                Vec3d.CODEC.fieldOf("playerPos").forGetter(Settings::playerPos),
-                Identifier.CODEC.listOf().fieldOf("functions").forGetter(Settings::functions),
-                Identifier.CODEC.listOf().fieldOf("playerFunctions").forGetter(Settings::playerFunctions)
+                ResourceLocation.CODEC.fieldOf("structureId").forGetter(Settings::structureId),
+                Vec3.CODEC.fieldOf("playerPos").forGetter(Settings::playerPos),
+                ResourceLocation.CODEC.listOf().fieldOf("functions").forGetter(Settings::functions),
+                ResourceLocation.CODEC.listOf().fieldOf("playerFunctions").forGetter(Settings::playerFunctions)
         ).apply(instance, Settings::new));
     }
 }
