@@ -1,5 +1,5 @@
 # DemoBox
-DemoBox is a tool for creating interactive demos for mods, originally created for blanketcon 23.
+DemoBox is a tool for creating interactive demos for mods, originally created for BlanketCon '23.
 It uses plasmid, the library behind nuceleoid games, to manage virtual worlds safely,
 allowing users to experience mods in survival mode without risking them breaking things in the overworld.
 

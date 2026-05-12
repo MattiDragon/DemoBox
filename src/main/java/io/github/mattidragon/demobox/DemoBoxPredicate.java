@@ -4,25 +4,26 @@ import com.mojang.serialization.MapCodec;
 import eu.pb4.predicate.api.AbstractPredicate;
 import eu.pb4.predicate.api.PredicateContext;
 import eu.pb4.predicate.api.PredicateResult;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import xyz.nucleoid.plasmid.api.game.GameSpaceManager;
 
 public class DemoBoxPredicate extends AbstractPredicate {
-    public static final ResourceLocation ID = DemoBox.id("in_demo");
-    public static final DemoBoxPredicate INSTANCE = new DemoBoxPredicate();
-    public static final MapCodec<DemoBoxPredicate> CODEC = MapCodec.unit(INSTANCE);
+	public static final Identifier ID = DemoBox.id("in_demo");
+	public static final DemoBoxPredicate INSTANCE = new DemoBoxPredicate();
+	public static final MapCodec<DemoBoxPredicate> CODEC = MapCodec.unit(INSTANCE);
 
-    public DemoBoxPredicate() {
-        super(ID, CODEC);
-    }
+	public DemoBoxPredicate() {
+		super(ID, CODEC);
+	}
 
-    @Override
-    public PredicateResult<?> test(PredicateContext context) {
-        var world = context.world();
-        if (world == null) return PredicateResult.ofFailure();
-        var gameSpace = GameSpaceManager.get().byWorld(world);
-        if (gameSpace == null) return PredicateResult.ofFailure();
-        if (gameSpace.getMetadata().sourceConfig().value().type() != DemoBoxGame.TYPE) return PredicateResult.ofFailure();
-        return PredicateResult.ofSuccess();
-    }
+	@Override
+	public PredicateResult<?> test(PredicateContext context) {
+		var level = context.world();
+		if (level == null) return PredicateResult.ofFailure();
+		var gameSpace = GameSpaceManager.get().byLevel(level);
+		if (gameSpace == null) return PredicateResult.ofFailure();
+		if (gameSpace.getMetadata().sourceConfig().value().type() != DemoBoxGame.TYPE)
+			return PredicateResult.ofFailure();
+		return PredicateResult.ofSuccess();
+	}
 }

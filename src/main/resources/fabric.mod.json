@@ -1,33 +1,38 @@
 {
-  "schemaVersion": 1,
-  "id": "demobox",
-  "version": "${version}",
-  "name": "DemoBox",
-  "description": "A tool for creating interactive demo environments for mods",
-  "authors": [
-    "MattiDragon"
-  ],
-  "contact": {
-    "website": "https://modrinth.com/mods/demobox",
-    "repo": "https://github.com/MattiDragon/DemoBox"
-  },
-  "license": "MIT",
-  "icon": "assets/demobox/icon.png",
-  "environment": "*",
-  "entrypoints": {
-    "client": [
-      "io.github.mattidragon.demobox.client.DemoBoxClient"
-    ],
-    "main": [
-      "io.github.mattidragon.demobox.DemoBox"
-    ]
-  },
-  "mixins": [
-    "demobox.mixins.json"
-  ],
-  "depends": {
-    "fabricloader": ">=0.17.2",
-    "fabric-api": "*",
-    "minecraft": "1.21.8"
-  }
+	"schemaVersion": 1,
+	"id": "${modId}",
+	"version": "${version}",
+	"name": "${modName}",
+	"description": "${modDescription}",
+	"authors": [
+		"${authors}"
+	],
+	"contributors": [
+		"${contributors}"
+	],
+	"contact": {
+		"homepage": "${homepage}",
+		"issues": "${issues}",
+		"sources": "${sources}"
+	},
+	"license": "${license}",
+	"icon": "assets/${modId}/icon.png",
+	"mixins": [
+		"${modId}.mixins.json"
+	],
+	"depends": {
+		"minecraft": "~${minecraftVersion}",
+		"fabricloader": ">=${fabricLoaderVersion}",
+		"fabric-api": ">=${fabricApiVersion}"
+	},
+	"suggests": {
+	},
+	"entrypoints": {
+		"client": [
+			"io.github.mattidragon.demobox.client.DemoBoxClient"
+		],
+		"main": [
+			"io.github.mattidragon.demobox.DemoBox"
+		]
+	}
 }
